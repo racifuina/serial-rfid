@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+        body {
+  padding-top: 5rem;
+}
+.starter-template {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}</style>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>ASISTENCIA RFID</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="/">ASISTENCIA RFID</a>
+
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/estudiantes">Estudiantes</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/asistencia">Asistencia</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main role="main" class="container">
+
+        <div class="starter-template">
+            <!--<% if (serialPort.length) { %> -->
+            <h1 id="status-header">Dispositivo conectado</h1>
+            <!--<%} else {%> -->
+            <h1 id="status-header">Selecciona un puerto</h1>
+
+            <form class="form">
+                <select class="form-control" id="port-select" data-selection="<%=serialPort%>">
+                    <option value="">
+                        Selecciona un puerto
+                    </option>
+                    <!--<% ports.forEach(function(port) { %> -->
+
+                    <!--<% if (port == serialPort) { %> -->
+                    <option selected>
+                        <%=port.first%>
+                    </option>
+                    <!--<%} else {%> -->
+                    <option>
+                        <%=port.comName%>
+                    </option>
+                    <!--<%}%> -->
+                    <!--<% });%> -->
+                </select>
+            </form>
+            <!--<%}%> -->
+            <p class="lead" id="port-name">
+                <%=serialPort%><br></p>
+        </div>
+
+    </main>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        socket.on('serialConnected', function(device) {
+            $('#port-name').text(device.port);
+            $('#status-header').text('Dispositivo conectado');
+            $('#port-select').fadeOut(0);
+        });
+
+        socket.on('serialDisconnected', function(device) {
+            $('#port-name').text('')
+            $('#port-select').val('')
+            $('#status-header').text('Selecciona un puerto');
+            $('#port-select').fadeIn();
+        });
+
+        $('#port-select').val($('#port-select').data('selection'));
+
+        $('#port-select').change(function(e) {
+            socket.emit('connectSerial', {
+                port: $('#port-select').val()
+            }, function(data) {
+                if (data.error) {
+                    $('#port-select').val('')
+                }
+            });
+
+        })
+
+    </script>
+</body>
+
+</html>

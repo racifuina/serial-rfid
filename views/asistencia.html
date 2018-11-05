@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+    </style>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>Control de asistencia</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="/">ASISTENCIA RFID</a>
+
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/estudiantes">Estudiantes</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/asistencia">Asistencia</a>
+                </li>
+            </ul>
+        </div>
+
+    </nav>
+
+    <main role="main" class="container-fluid">
+        <div style="padding-top: 75px;">
+            <h3>Control de asistencia
+            </h3>
+        </div>
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Fecha y hora</th>
+                    <th scope="col"># Tarjeta</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Apellido</th>
+                    <th scope="col">Clase/Materia</th>
+                </tr>
+            </thead>
+            <tbody id="records-tbody">
+
+            </tbody>
+        </table>
+
+    </main>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        function reloadStudents() {
+            socket.emit('getRecords', function(students) {
+                $('#records-tbody').html('');
+                students.forEach(function(record) {
+                    $('#records-tbody').append('<tr><td>' + record.createdAt + '</td><th scope="row">' + record.card + '</th><td>' + record.firstName + '</td><td>' + record.lastName + '</td><td>' + record.class + '</td></tr>');
+                })
+            });
+        }
+
+        function deleteStudent(id) {
+            socket.emit('deleteStudent', id, function(data) {
+                if (!data.error) {
+                    reloadStudents();
+                }
+            });
+        }
+
+
+        function nuevoEstudiante() {
+            if ($('#rfid-card').val() && $('#first-name').val() && $('#last-name').val()) {
+                var newStudent = {
+                    card: $('#rfid-card').val(),
+                    firstName: $('#first-name').val(),
+                    lastName: $('#last-name').val(),
+                    grade: $('#grade').val(),
+                }
+                socket.emit('newStudent', newStudent, function(data) {
+                    if (data.error) {
+                        $('#alert').html('<div class="alert alert-danger" role="alert">Error al guardar la información</div>');
+                    } else {
+                        reloadStudents()
+                        $('#nuevo').modal('hide');
+                    }
+                });
+
+            } else {
+                $('#alert').html('<div class="alert alert-danger" role="alert">Llena todos los campos</div>');
+                $('.required').css('color', 'red');
+            }
+
+        }
+
+        reloadStudents();
+
+        $('#nuevo').on('hidden.bs.modal', function() {
+            $('input').val('');
+            $('#alert').html('');
+            $('.required').css('color', '#212529');
+        });
+
+    </script>
+</body>
+
+</html>
