@@ -1,24 +1,25 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var Record = new Schema({
-    card: {
+var Class = new Schema({
+    name: {
         type: String,
         required: true,
     },
-    firstName: {
+    teacher: {
         type: String,
         required: true,
     },
-    lastName: {
+    time: {
         type: String,
         required: true,
-    },
-    room: {
-        type: String,
-        required: true,
+        unique: true,
     },
     class: {
+        type: String,
+        required: true,
+    },
+    grade: {
         type: String,
         required: true,
     }
@@ -26,7 +27,4 @@ var Record = new Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model("records", Record);
-
-
-//mongo rfid --eval 'db.records.drop()'
+module.exports = mongoose.model("classes", Class);

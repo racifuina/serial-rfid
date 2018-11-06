@@ -14,7 +14,7 @@ const mongoose = require("mongoose");
 
 const Student = require("./models/Student");
 const Record = require("./models/Record");
-
+const Class = require("./models/Class");
 
 mongoose.connect("mongodb://localhost:27017/rfid", {
     autoReconnect: true,
@@ -76,21 +76,36 @@ function portOnData(data) {
             card: parsed.card
         }).then(student => {
             if (student) {
-                new Record({
-                    card: parsed.card,
-                    class: parsed.class,
-                    firstName: student.firstName,
-                    lastName: student.lastName,
-                }).save().then(record => {
-
-                    let initial = student.firstName.charAt(0);
-                    let lastName = student.lastName;
-                    let message = "1" +  initial + ". " + lastName;
-                    port.write(message);
+                let classStart = moment(new Date()).tz('America/Guatemala').format("HH:00");
+                Class.findOne({
+                    time: classStart
+                }).then(course => {
+                    if (course) {
+                        if (course.grade == student.grade) {
+                            new Record({
+                                card: parsed.card,
+                                class: course.name,
+                                room: parsed.class,
+                                firstName: student.firstName,
+                                lastName: student.lastName,
+                            }).save().then(record => {
+                                let initial = student.firstName.charAt(0);
+                                let lastName = student.lastName;
+                                let message = "1" + initial + ". " + lastName;
+                                port.write(message);
+                            }, err => {
+                                port.write("0Fallo Servidor");
+                            });
+                        } else {
+                            console.log('no asignado')
+                            port.write("0No Asignado");
+                        }
+                    } else {
+                        port.write("0No hay curso");
+                    }
                 }, err => {
-                    console.log(err)
                     port.write("0Fallo Servidor");
-                })
+                });
             } else {
                 port.write("0No Encontrado");
             }
@@ -101,7 +116,9 @@ function portOnData(data) {
 }
 
 io.on("connection", socket => {
+
     socket.on('connectSerial', (data, result) => {
+
         jsonData = "";
         SERIAL_PORT = "";
         if (port) {
@@ -136,6 +153,7 @@ io.on("connection", socket => {
                 });
             }
         });
+
     });
 
     socket.on('getStudents', result => {
@@ -153,10 +171,15 @@ io.on("connection", socket => {
     });
 
     socket.on('getRecords', result => {
-
         Record.find().sort({
             createdAt: 1
         }).then(records => {
+            records = records.map(record => {
+                record = record.toObject();
+                record.createdAt = moment(record.createdAt).tz('America/Guatemala').format("DD-MM-YYYY HH:mm");
+                return record;
+            });
+
             result(records);
         }, err => {
             result({
@@ -195,6 +218,54 @@ io.on("connection", socket => {
         });
     });
 
+    socket.on('getClasses', result => {
+        Class.find().sort({
+            time: 1
+        }).then(classes => {
+            result(classes);
+        }, err => {
+            result({
+                error: true,
+            });
+        });
+    });
+
+    socket.on('newClass', (data, result) => {
+        new Class(data).save().then(clase => {
+            result({
+                error: false,
+                class: clase
+            });
+        }, err => {
+            if (err.code == 11000) {
+                result({
+                    error: true,
+                    message: 'Horario no disponible'
+                });
+            } else {
+                result({
+                    error: true,
+                    message: 'Error al guardar la información'
+                });
+            }
+        });
+    });
+
+    socket.on('deleteClass', (clase, result) => {
+        Class.findOneAndDelete({
+            _id: clase
+        }).then(subject => {
+            return subject.remove();
+        }).then(deleted => {
+            result({
+                error: false,
+            });
+        }, err => {
+            result({
+                error: true,
+            });
+        });
+    });
 });
 
 app.get('/', (req, res) => {
@@ -212,6 +283,10 @@ app.get('/estudiantes', (req, res) => {
 
 app.get('/asistencia', (req, res) => {
     res.render(__dirname + '/views/asistencia.html', {});
+});
+
+app.get('/cursos', (req, res) => {
+    res.render(__dirname + '/views/cursos.html', {});
 });
 
 http.listen(HTTP_PORT, function () {
