@@ -149,20 +149,19 @@
     <script>
         var socket = io();
 
-        function reloadStudents() {
+        function reloadClasses() {
             socket.emit('getClasses', function(classes) {
                 $('#classes-tbody').html('');
                 classes.forEach(function(clase) {
-                    $('#classes-tbody').append('<tr><th scope="row">' + clase.class + '</th><td>' + clase.name + '</td><td>' + clase.teacher + '</td><td>' + clase.grade + '</td><td>' + clase.time + '</td><td><button onclick="deleteStudent(\'' + clase._id + '\')" type="button" class="btn btn-link btn-sm">Eliminar</button></td></tr>');
+                    $('#classes-tbody').append('<tr><th scope="row">' + clase.class + '</th><td>' + clase.name + '</td><td>' + clase.teacher + '</td><td>' + clase.grade + '</td><td>' + clase.time + '</td><td><button onclick="deleteClass(\'' + clase._id + '\')" type="button" class="btn btn-link btn-sm">Eliminar</button></td></tr>');
                 })
             });
         }
 
-
-        function deleteStudent(id) {
+        function deleteClass(id) {
             socket.emit('deleteClass', id, function(data) {
                 if (!data.error) {
-                    reloadStudents();
+                    reloadClasses();
                 }
             });
         }
@@ -176,12 +175,11 @@
                     grade: $('#grade').val(),
                     class: $('#class').val(),
                 }
-                console.log(newClass)
                 socket.emit('newClass', newClass, function(data) {
                     if (data.error) {
                         $('#alert').html('<div class="alert alert-danger" role="alert">' +  data.message + '</div>');
                     } else {
-                        reloadStudents();
+                        reloadClasses();
                         $('#nuevo').modal('hide');
                     }
                 });
@@ -193,7 +191,7 @@
 
         }
 
-        reloadStudents();
+        reloadClasses();
 
         $('#nuevo').on('hidden.bs.modal', function() {
             $('input').val('');

@@ -71,7 +71,7 @@
     <script>
         var socket = io();
 
-        function reloadStudents() {
+        function reloadAsistencias() {
             socket.emit('getRecords', function(students) {
                 $('#records-tbody').html('');
                 students.forEach(function(record) {
@@ -80,46 +80,7 @@
             });
         }
 
-        function deleteStudent(id) {
-            socket.emit('deleteStudent', id, function(data) {
-                if (!data.error) {
-                    reloadStudents();
-                }
-            });
-        }
-
-
-        function nuevoEstudiante() {
-            if ($('#rfid-card').val() && $('#first-name').val() && $('#last-name').val()) {
-                var newStudent = {
-                    card: $('#rfid-card').val(),
-                    firstName: $('#first-name').val(),
-                    lastName: $('#last-name').val(),
-                    grade: $('#grade').val(),
-                }
-                socket.emit('newStudent', newStudent, function(data) {
-                    if (data.error) {
-                        $('#alert').html('<div class="alert alert-danger" role="alert">Error al guardar la información</div>');
-                    } else {
-                        reloadStudents()
-                        $('#nuevo').modal('hide');
-                    }
-                });
-
-            } else {
-                $('#alert').html('<div class="alert alert-danger" role="alert">Llena todos los campos</div>');
-                $('.required').css('color', 'red');
-            }
-
-        }
-
-        reloadStudents();
-
-        $('#nuevo').on('hidden.bs.modal', function() {
-            $('input').val('');
-            $('#alert').html('');
-            $('.required').css('color', '#212529');
-        });
+        reloadAsistencias();
 
     </script>
 </body>
